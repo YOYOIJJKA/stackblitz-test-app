@@ -82,8 +82,34 @@ function getArticles(authorId: number): Observable<Article[]> {
   standalone: true,
   imports: [CommonModule],
   template: `
-    <pre>{{ articles | json }}</pre>
+  <div class="table-container" (scroll)="onScroll($event)">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>AuthorId</th>
+        <th>isNew</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let item of visibleItems">
+        <td>{{ item.title }}</td>
+        <td>{{ item. authorId }}</td>
+        <td> {{ item.isNew ? 'Новое' : 'Старое' }} </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
   `,
+  styles: [`
+  .table-container {
+    height: 300px;
+    overflow-y: auto;
+  }
+  td {
+    border: 1px solid black;
+  }
+`]
 })
 export class App implements OnInit {
   articles: Article[] = [];
@@ -118,7 +144,34 @@ export class App implements OnInit {
           this.articles.push(article);
         },
       });
+      this.articles = generateArticles(1000);
+      this.loadMore();
   }
+
+  visibleItems: any[] = [];
+  bufferSize = 50;
+  lastIndex = 0;
+
+  onScroll(event: any) {
+    console.log(event.target.offsetHeight)
+    console.log(event.target.scrollTop)
+    console.log(event.target.scrollHeight )
+    if ((event.target.offsetHeight + event.target.scrollTop)*1.2 > event.target.scrollHeight) {
+      console.log(event.target.offsetHeight)
+      console.log(event.target.scrollTop)
+      console.log(event.target.scrollHeight )
+      console.log('fired');
+      this.loadMore();
+    }
+  }
+
+  loadMore() {
+    const start = this.lastIndex - this.bufferSize/2 > 0 ? this.lastIndex - this.bufferSize/2 : 0;
+    const nextItems = this.articles.slice(start, this.lastIndex + this.bufferSize/2);
+    this.visibleItems = [...this.visibleItems, ...nextItems];
+    this.lastIndex += this.bufferSize;
+  }
+
 }
 
 bootstrapApplication(App);
